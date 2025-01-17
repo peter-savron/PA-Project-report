@@ -80,9 +80,34 @@ We can give the robotic arm eight inputs:
 The PLC has six buttons, four lights and a switch.
 
 ### 2.2 Control Software
-The project was composed of two elements, the project for programming the PLC and a project for programming the HMI interface;
-Detail the programming environment and techniques.
-Explain how manual and automatic modes were implemented.
+The project was composed of two elements, the project for programming the PLC and a project for programming the HMI interface. We implemented a step be step approach introdusing functionalities one at a time.
+
+### 2.2.1 Manual control
+At first we implemented a function block wich was applicable to all the motors. Inside there was the interlock logic, detection of hardware limits in both directions and consequential stopping of the hardware. The function block took as an input the state of the control switch, the input which changes direction of movement, the motor movement clock, the maximum motor extension and whether or not the motor was selected. Inside the motors various criteria were checked, if interlock expired and the motor could change direction, if the motor reached the minimum or maximum of its extension and if motor changed direction so interlock were to be activated. The outputs of the function are three boolean values which control the movement and the direction of the motor and a value which tells whether interlock is active or not, usefull for debbugging and checking motor status.
+For manual mode we implemented a multiplexer which choose which motor to activate based on which button of the four black buttons was last pressed. The direction and movement button were common to all the motors, green for the former, red for the latter.
+
+All the implementaions for the manual movement checkpoint were made in structure test.
+
+With the multiplexer and the function block implemented, we met all the requirements for the manual contol checkpoint and received a payout in form of lab assignment points.
+
+### 2.2.2 Automatic control
+Next step was to implement a routine which was cyclically executed on the PLC. The routine consists of four separate functions: 
+* init();
+* automate();
+* track();
+* move();
+
+#### 2.2.2.1 Init
+The init function is responsible for initializing the motor arm when it is in automatic mode and not yet initialized.
+
+#### 2.2.2.2 Automate
+The automate function is responsible for reading the instructions in the recept and setting the movement instructions in such a way that it will reach the target location in a safe manner, so retracting first, then rotating, changing height then extending and eventually grabbing or releasing if instructed to do so.
+
+#### 2.2.2.3 Track
+The track function is responsible for ttracking the movements of various items in the storage. It detects whether the arm is approching an item, that is if the current instruction is instructing the arm to reach to an item, and writes the item id into the `grabbed` variable once the item is grabbed. While moving it will update the item position in the item table. Once the claw releases the item, grabbed will be set to a `null` value and the program will wait for the next item to be grabbed.
+
+#### 2.2.2.4 Move
+It will move the motors and update the arm position. While in manual mode it will work as described above, while in automatic mode it will read the instructions given by the `auto` function and move the arm accordingly.
 ### 2.3 SCADA Integration (if applicable):
 Overview of SCADA features, such as monitoring, control, and alarms.
 Include screenshots or illustrations of the SCADA interface.
